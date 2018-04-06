@@ -1,0 +1,5 @@
+ApiSecrets.*
+target/*
+/target/
+.settings/*
+*.prefs
