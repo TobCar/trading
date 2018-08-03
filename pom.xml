@@ -39,6 +39,11 @@
 	    <version>-SNAPSHOT</version>
 	</dependency>
 	<dependency>
+		<groupId>com.github.patriques82</groupId>
+		<artifactId>alphavantage4j</artifactId>
+	    <version>7474fae02e</version>
+	</dependency>
+	<dependency>
 	    <groupId>org.json</groupId>
 	    <artifactId>json</artifactId>
 	    <version>20180130</version>
