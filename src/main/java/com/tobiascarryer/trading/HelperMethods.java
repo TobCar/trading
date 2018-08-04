@@ -22,4 +22,13 @@ public class HelperMethods {
         } 
         return file;
     }
+	
+	/**
+	 * Assumes there is only one period in the file's name.
+	 * @param file To get the name for
+	 * @return String
+	 */
+	public static String getFileNameWithoutExtension(File file) {
+		return file.getName().substring(0, file.getName().indexOf("."));
+	}
 }
