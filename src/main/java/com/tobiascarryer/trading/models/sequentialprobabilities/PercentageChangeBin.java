@@ -10,6 +10,16 @@ public class PercentageChangeBin {
 		this.bin = bin;
 	}
 	
+	public Boolean isPositiveBin() {
+		if( this.bin > 0 ) {
+			return true;
+		} else if( this.bin < 0 ) {
+			return false;
+		} else {
+			return null;
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return String.valueOf(bin);
