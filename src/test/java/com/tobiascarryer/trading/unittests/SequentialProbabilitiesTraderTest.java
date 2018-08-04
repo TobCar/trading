@@ -30,38 +30,6 @@ public class SequentialProbabilitiesTraderTest extends TestCase {
     public static Test suite() {
         return new TestSuite( SequentialProbabilitiesTraderTest.class );
     }
-    
-    /**
-     * Getting all latest bin sequences.
-     */
-    public void testGetSequences() {
-    	int minLength = 2;
-    	int maxLength = 4;
-    	
-    	PercentageChangeBin zero = new PercentageChangeBin(0);
-    	PercentageChangeBin negOne = new PercentageChangeBin(-1);
-    	PercentageChangeBin two = new PercentageChangeBin(2);
-    	PercentageChangeBin negThree = new PercentageChangeBin(-3);
-    	
-    	PercentageChangeBin[] bins2 = {zero, negOne};
-    	PercentageChangeBin[] bins3 = {zero, negOne, two};
-    	PercentageChangeBin[] bins4 = {zero, negOne, two, negThree};
-    	
-    	Set<BinSequence> binSequencesLeftToAssert = new HashSet<>();
-    	binSequencesLeftToAssert.add(new BinSequence(bins2));
-    	binSequencesLeftToAssert.add(new BinSequence(bins3));
-    	binSequencesLeftToAssert.add(new BinSequence(bins4));
-    	
-    	BinSequence[] sequences = SequentialProbabilitiesTrader.getSequences(bins4, minLength, maxLength);
-    	
-    	assertEquals(sequences.length, maxLength-minLength+1);
-    	
-    	for( BinSequence sequence: sequences ) {
-    		assertTrue(binSequencesLeftToAssert.remove(sequence));
-    	}
-    	
-    	assertTrue(binSequencesLeftToAssert.isEmpty());
-    }
 
     /**
      * Keeping track of the latest bins. Smaller index = more recent.

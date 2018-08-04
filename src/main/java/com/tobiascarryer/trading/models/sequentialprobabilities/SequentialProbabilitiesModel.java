@@ -41,4 +41,18 @@ public class SequentialProbabilitiesModel {
     	r.close();
     	return links;
     }
+    
+    /**
+     * @param latestBins Array of bins, smaller indices are more recent.
+     * @param minLength
+     * @param maxLength
+     * @return String array. Each index is a sequence based on a different amount of previous bins.
+     */
+    public static BinSequence[] getSequences(PercentageChangeBin[] latestBins, int minLength, int maxLength) {
+    	BinSequence[] sequences = new BinSequence[maxLength-minLength + 1];
+    	for( int i = 0; i < sequences.length; i++ ) {
+    		sequences[i] = new BinSequence(Arrays.copyOfRange(latestBins, 0, i + minLength));
+    	}
+    	return sequences;
+    }
 }
