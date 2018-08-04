@@ -1,6 +1,7 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import com.tobiascarryer.trading.charts.Candle;
 
@@ -32,7 +33,7 @@ public class PercentageChangeFactory {
 		if( previousCandle == null )
 			return null;
 			
-		double percentageChange = candle.getClose().divide(previousCandle.getClose()).subtract(new BigDecimal(1)).doubleValue();
+		double percentageChange = candle.getClose().divide(previousCandle.getClose(), RoundingMode.HALF_EVEN).subtract(new BigDecimal(1)).doubleValue();
 		if( percentageChange > 0 ) {
 			for( int i = 0; i < intervalThresholdsPosChange.length; i++ ) {
 				if( percentageChange < intervalThresholdsPosChange[i] )
