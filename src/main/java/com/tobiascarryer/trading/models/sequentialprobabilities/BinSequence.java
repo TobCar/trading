@@ -1,5 +1,7 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
+import java.util.Objects;
+
 public class BinSequence {
 	
 	private PercentageChangeBin[] bins;
@@ -17,7 +19,6 @@ public class BinSequence {
             return false;
 
         BinSequence otherSequence = (BinSequence) other;
-        
         if( bins.length != otherSequence.bins.length )
         	return false;
         
@@ -35,5 +36,10 @@ public class BinSequence {
 		for( PercentageChangeBin bin: bins )
 			toReturn += bin.toString();
 		return toReturn;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(bins);
 	}
 }

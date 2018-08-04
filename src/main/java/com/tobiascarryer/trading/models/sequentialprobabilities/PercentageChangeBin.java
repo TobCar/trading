@@ -1,5 +1,7 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
+import java.util.Objects;
+
 public class PercentageChangeBin {
 	
 	public int bin;
@@ -23,5 +25,10 @@ public class PercentageChangeBin {
 
         PercentageChangeBin otherPercentageChangeBin = (PercentageChangeBin) other;
         return this.bin == otherPercentageChangeBin.bin;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(bin);
 	}
 }
