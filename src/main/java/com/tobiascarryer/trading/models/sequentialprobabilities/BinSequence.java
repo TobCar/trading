@@ -1,5 +1,7 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class BinSequence {
@@ -8,6 +10,34 @@ public class BinSequence {
 	
 	public BinSequence(PercentageChangeBin[] bins) {
 		this.bins = bins;
+	}
+	
+	public static BinSequence parse(String sequence) {
+		boolean nextIsNegNum = false;
+		List<PercentageChangeBin> bins = new ArrayList<>();
+		for( int i = 0; i < sequence.length(); i++ ) {
+			char c = sequence.charAt(i);
+			if( c == '-' )
+				nextIsNegNum = true;
+			else {
+				int binVal = Integer.valueOf(String.valueOf(c));
+				if( nextIsNegNum ) {
+					nextIsNegNum = false;
+					binVal = -binVal;
+				}
+				bins.add(new PercentageChangeBin(binVal));
+			}
+		}
+		
+		return new BinSequence(copyListToArray(bins));
+	}
+	
+	private static PercentageChangeBin[] copyListToArray(List<PercentageChangeBin> list) {
+		PercentageChangeBin[] array = new PercentageChangeBin[list.size()];
+		for( int i = 0; i < list.size(); i++ ) {
+			array[i] = list.get(i);
+		}
+		return array;
 	}
 	
 	@Override

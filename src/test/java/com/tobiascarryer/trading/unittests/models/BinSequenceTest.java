@@ -44,4 +44,25 @@ public class BinSequenceTest {
 		
 		assertEquals("1-23", sequence.toString());
 	}
+	
+	@Test
+	public void testParsing() {
+		PercentageChangeBin bin1 = new PercentageChangeBin(1);
+		PercentageChangeBin bin2 = new PercentageChangeBin(-2);
+		PercentageChangeBin bin3 = new PercentageChangeBin(3);
+		
+		PercentageChangeBin[] bins = {bin1, bin2, bin3};
+		BinSequence sequence = new BinSequence(bins);
+		
+		PercentageChangeBin[] binsNotEqual = {bin1, bin2};
+		BinSequence sequenceNotEqual = new BinSequence(binsNotEqual);
+		
+		String toParseEqual = sequence.toString();
+		String toParseNotEqual = sequenceNotEqual.toString();
+		BinSequence equalSequence = BinSequence.parse(toParseEqual);
+		BinSequence notEqualSequence = BinSequence.parse(toParseNotEqual);
+		
+		assertEquals(sequence, equalSequence);
+		assertNotEquals(sequence, notEqualSequence);
+	}
 }
