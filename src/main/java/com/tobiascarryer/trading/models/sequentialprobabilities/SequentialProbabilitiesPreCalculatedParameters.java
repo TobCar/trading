@@ -36,8 +36,7 @@ public final class SequentialProbabilitiesPreCalculatedParameters {
 		calculateParameters(SequentialProbabilitiesHyperparameters.numberOfBinIntervals);
 	}
 	
-	public static SequentialProbabilitiesPreCalculatedParameters loadFromFile() throws IOException {
-		File precalculatedParametersFile = HelperMethods.chooseFile();
+	public static SequentialProbabilitiesPreCalculatedParameters loadFrom(File precalculatedParametersFile) throws IOException {
 		BufferedReader r = new BufferedReader(new FileReader(precalculatedParametersFile));
 		
 		double[] posChanges = convertToDoubleArray(r.readLine().split(","));
