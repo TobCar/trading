@@ -23,8 +23,8 @@ public final class SequentialProbabilitiesPreCalculatedParameters {
 	
 	static String savedParametersFileNameAppend = "-precalc-params.csv";
 	
-	double[] posThresholds;
-	double[] negThresholds;
+	public double[] posThresholds;
+	public double[] negThresholds;
 	
 	public SequentialProbabilitiesPreCalculatedParameters(double[] posThresholds, double[] negThresholds) {
 		this.posThresholds = posThresholds;
