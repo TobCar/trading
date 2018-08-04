@@ -28,6 +28,9 @@ public class PercentageChangeFactory {
 	}
 	
 	public PercentageChangeBin create(Candle candle, Candle previousCandle) {
+		if( previousCandle == null )
+			return null;
+			
 		double percentageChange = candle.getClose().divide(previousCandle.getClose()).subtract(new BigDecimal(1)).doubleValue();
 		if( percentageChange > 0 ) {
 			for( int i = 0; i < intervalThresholdsPosChange.length; i++ ) {
