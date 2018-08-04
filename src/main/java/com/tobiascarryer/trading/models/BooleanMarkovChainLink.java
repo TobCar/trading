@@ -9,7 +9,7 @@ public class BooleanMarkovChainLink<T> {
     private double trueOccurences, falseOccurences, totalOccurences;
     private final T value;
     
-    BooleanMarkovChainLink( T value ) {
+    public BooleanMarkovChainLink( T value ) {
         this.value = value;
     }
     
@@ -38,6 +38,33 @@ public class BooleanMarkovChainLink<T> {
     	else
     		falseOccurences += 1;
     	totalOccurences += 1;
+    }
+    
+    public double getTrueOccurences() {
+    	return trueOccurences;
+    }
+    
+    public double getFalseOccurences() {
+    	return falseOccurences;
+    }
+    
+    public double getTotalOccurences() {
+    	return totalOccurences;
+    }
+    
+    @Override
+    public String toString() {
+    	return value.toString()+":"+trueOccurences+","+falseOccurences;
+    }
+    
+    /**
+     * Used to parse the occurences back from the toString() method.
+     */
+    public void setOccurencesFromString(String occurencesString) {
+    	String[] occurences = occurencesString.split(",");
+    	trueOccurences = Double.valueOf(occurences[0]);
+    	falseOccurences = Double.valueOf(occurences[1]);
+    	totalOccurences = trueOccurences + falseOccurences;
     }
     
     /**
