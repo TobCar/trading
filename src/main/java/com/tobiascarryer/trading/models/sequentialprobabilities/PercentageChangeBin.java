@@ -27,10 +27,7 @@ public class PercentageChangeBin {
 	
 	@Override
 	public boolean equals(Object other){
-		if( other == null )
-            return false;
-
-        if( !PercentageChangeBin.class.isAssignableFrom(other.getClass()) )
+		if( other == null || getClass() != other.getClass() )
             return false;
 
         PercentageChangeBin otherPercentageChangeBin = (PercentageChangeBin) other;

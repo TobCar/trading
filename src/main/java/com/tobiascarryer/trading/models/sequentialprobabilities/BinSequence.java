@@ -42,15 +42,15 @@ public class BinSequence {
 	
 	@Override
 	public boolean equals(Object other) {
-		if( other == null )
-            return false;
-
-        if( !BinSequence.class.isAssignableFrom(other.getClass()) )
+		if( other == null || getClass() != other.getClass() )
             return false;
 
         BinSequence otherSequence = (BinSequence) other;
         if( bins.length != otherSequence.bins.length )
         	return false;
+        
+        if( hashCode() == otherSequence.hashCode() )
+        	return true;
         
         for( int i = 0; i < bins.length; i++ ) {
         	if( !otherSequence.bins[i].equals(bins[i]) )
