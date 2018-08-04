@@ -12,7 +12,7 @@ public class HelperMethods {
 		return new BigDecimal(Math.round(toRound.doubleValue() * 2.0) / 2.0);
 	}
 	
-	public static File chooseFile(){
+	public static File chooseFile() {
         JFileChooser fc = new JFileChooser();
         File file = null;
         int returnVal = fc.showOpenDialog(null);
