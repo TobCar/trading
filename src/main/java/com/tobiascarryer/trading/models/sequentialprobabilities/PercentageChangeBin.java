@@ -12,4 +12,16 @@ public class PercentageChangeBin {
 	public String toString() {
 		return String.valueOf(bin);
 	}
+	
+	@Override
+	public boolean equals(Object other){
+		if( other == null )
+            return false;
+
+        if( !PercentageChangeBin.class.isAssignableFrom(other.getClass()) )
+            return false;
+
+        PercentageChangeBin otherPercentageChangeBin = (PercentageChangeBin) other;
+        return this.bin == otherPercentageChangeBin.bin;
+	}
 }
