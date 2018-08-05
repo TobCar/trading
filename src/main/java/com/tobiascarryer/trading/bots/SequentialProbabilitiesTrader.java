@@ -10,20 +10,24 @@ import com.tobiascarryer.trading.models.sequentialprobabilities.BinSequence;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBin;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBinFactory;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
+import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesModel;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesPreCalculatedParameters;
 
 public class SequentialProbabilitiesTrader {
 	
+	private SequentialProbabilitiesModel model;
 	private PercentageChangeBinFactory factory;
 	private Candle previousCandle;
 	private PercentageChangeBin[] latestBins = new PercentageChangeBin[SequentialProbabilitiesHyperparameters.maxBinsInSequence];
 	
-	public SequentialProbabilitiesTrader(String precalculatedParametersFileName) throws IOException {
+	public SequentialProbabilitiesTrader(String precalculatedParametersFileName, String savedModelFileName) throws IOException {
 		File precalculatedParametersFile = new File(precalculatedParametersFileName);
     	SequentialProbabilitiesPreCalculatedParameters precalculatedParameters = SequentialProbabilitiesPreCalculatedParameters.loadFrom(precalculatedParametersFile);
     	double[] posChangeThresholds = precalculatedParameters.posThresholds;
     	double[] negChangeThresholds = precalculatedParameters.negThresholds;
     	factory = new PercentageChangeBinFactory(posChangeThresholds, negChangeThresholds);
+    	
+    	model = new SequentialProbabilitiesModel(savedModelFileName);
 	}
 	
 	/**
@@ -40,14 +44,7 @@ public class SequentialProbabilitiesTrader {
     
     private ModelPrediction<Boolean> processBin(PercentageChangeBin bin) {
     	latestBins = insertLatestBin(bin, latestBins);
-    	int minLength = SequentialProbabilitiesHyperparameters.minBinsInSequence;
-    	int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
-    	BinSequence[] sequences = getSequences(latestBins, minLength, maxLength);
-    	return predictNext(sequences);
-    }
-    
-    private ModelPrediction<Boolean> predictNext(BinSequence[] sequences) {
-    	return null;
+    	return model.predictNext(latestBins);
     }
     
     public static PercentageChangeBin[] insertLatestBin(PercentageChangeBin latestBin, PercentageChangeBin[] olderBins) {
