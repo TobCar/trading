@@ -37,7 +37,13 @@ public class PercentageChangeBinFile {
 			line = r.readLine();
 		}
 		r.close();
-		return (PercentageChangeBin[]) bins.toArray();
+		
+		PercentageChangeBin[] binsArray = new PercentageChangeBin[bins.size()];
+		for( int i = 0; i < bins.size(); i++ ) {
+			binsArray[i] = bins.get(i);
+		}
+		
+		return binsArray;
 	}
 	
 	public static void createBinFile(String historicalDataName, String precalculatedParametersFileName) throws IOException {
