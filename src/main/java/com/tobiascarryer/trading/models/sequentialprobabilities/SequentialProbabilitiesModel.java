@@ -21,7 +21,7 @@ import com.tobiascarryer.trading.models.ModelPrediction;
  */
 public class SequentialProbabilitiesModel {
 	
-	private static double percentageOfDataForTraining = 0.9;
+	private static double percentageOfDataForTraining = 0.8;
 	
 	private Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks;
 	
