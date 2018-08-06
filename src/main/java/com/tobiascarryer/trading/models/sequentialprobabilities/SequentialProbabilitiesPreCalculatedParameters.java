@@ -61,7 +61,7 @@ public final class SequentialProbabilitiesPreCalculatedParameters {
 		while( line != null && !line.startsWith("timestamp")) {
 			AlphaVantageDataPoint dataPoint = AlphaVantageDataPoint.parseLine(line);
 			
-			if( previousCandle != null ) {
+			if( previousCandle != null && previousCandle.getClose().compareTo(new BigDecimal(0)) == 1 ) {
 				BigDecimal percentageChange = dataPoint.candle.getClose().divide(previousCandle.getClose(), RoundingMode.HALF_EVEN).subtract(new BigDecimal(1));
 				double percentageChangeDouble = percentageChange.doubleValue();
 				int comparison = percentageChange.compareTo(new BigDecimal(0));
