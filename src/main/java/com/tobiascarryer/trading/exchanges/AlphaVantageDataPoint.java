@@ -37,7 +37,9 @@ public class AlphaVantageDataPoint {
 		BigDecimal low = new BigDecimal(columnValues[3]);
 		BigDecimal close = new BigDecimal(columnValues[4]);
 		
-		BigDecimal volume = new BigDecimal(columnValues[5]);
+		BigDecimal volume = new BigDecimal(-1);
+		if( 5 < columnValues.length )
+			volume = new BigDecimal(columnValues[5]);
 		
 		return new AlphaVantageDataPoint(timestamp, open, high, low, close, volume);
 	}
