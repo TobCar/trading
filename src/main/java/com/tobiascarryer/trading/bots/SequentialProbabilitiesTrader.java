@@ -2,11 +2,9 @@ package com.tobiascarryer.trading.bots;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.tobiascarryer.trading.charts.Candle;
 import com.tobiascarryer.trading.models.ModelPrediction;
-import com.tobiascarryer.trading.models.sequentialprobabilities.BinSequence;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBin;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBinFactory;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
