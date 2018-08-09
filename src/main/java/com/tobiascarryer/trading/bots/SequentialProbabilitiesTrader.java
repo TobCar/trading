@@ -9,7 +9,6 @@ import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChange
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBinFactory;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesModel;
-import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesBinThresholds;
 
 public class SequentialProbabilitiesTrader {
 	
@@ -18,14 +17,10 @@ public class SequentialProbabilitiesTrader {
 	private Candle previousCandle;
 	private PercentageChangeBin[] latestBins = new PercentageChangeBin[SequentialProbabilitiesHyperparameters.maxBinsInSequence];
 	
-	public SequentialProbabilitiesTrader(String precalculatedParametersFileName, String savedModelFileName) throws IOException {
-		File precalculatedParametersFile = new File(precalculatedParametersFileName);
-    	SequentialProbabilitiesBinThresholds precalculatedParameters = SequentialProbabilitiesBinThresholds.loadFrom(precalculatedParametersFile);
-    	double[] posChangeThresholds = precalculatedParameters.posThresholds;
-    	double[] negChangeThresholds = precalculatedParameters.negThresholds;
-    	factory = new PercentageChangeBinFactory(posChangeThresholds, negChangeThresholds);
-    	
-    	model = new SequentialProbabilitiesModel(savedModelFileName);
+	public SequentialProbabilitiesTrader(File parentDirectory, String binThresholdsFileName, String savedModelFileName) throws IOException {
+		File binThresholdsFile = new File(parentDirectory, binThresholdsFileName);
+	    factory = PercentageChangeBinFactory.loadFrom(binThresholdsFile);
+	    model = new SequentialProbabilitiesModel(new File(parentDirectory, savedModelFileName));
 	}
 	
 	/**

@@ -20,8 +20,7 @@ public class SequentialProbabilitiesModel {
 	
 	private Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks;
 	
-    public SequentialProbabilitiesModel(String savedModelFileName) throws IOException {
-    	File savedModelFile = new File(savedModelFileName);
+    public SequentialProbabilitiesModel(File savedModelFile) throws IOException {
     	this.chainLinks = loadModelFrom(savedModelFile);
     }
     

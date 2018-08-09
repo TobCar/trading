@@ -1,5 +1,7 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -27,6 +29,13 @@ public class PercentageChangeBinFactory {
 		this.intervalThresholdsPosChange = posChangeThresholds;
 		this.intervalThresholdsNegChange = negChangeThresholds;
 		printIntervals();
+	}
+	
+	public static PercentageChangeBinFactory loadFrom(File binThresholdsFile) throws IOException {
+		SequentialProbabilitiesBinThresholds binThresholds = SequentialProbabilitiesBinThresholds.loadFrom(binThresholdsFile);
+    	double[] posChangeThresholds = binThresholds.posThresholds;
+    	double[] negChangeThresholds = binThresholds.negThresholds;
+    	return new PercentageChangeBinFactory(posChangeThresholds, negChangeThresholds);
 	}
 	
 	public PercentageChangeBin create(Candle candle, Candle previousCandle) {
