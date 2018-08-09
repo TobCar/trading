@@ -23,6 +23,18 @@ public class HelperMethods {
         return file;
     }
 	
+	public static File chooseDirectory() {
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        File file = null;
+        int returnVal = fc.showOpenDialog(null);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            file = fc.getSelectedFile();  
+        } 
+        return file;
+    }
+	
 	/**
 	 * Assumes there is only one period in the file's name.
 	 * @param file To get the name for

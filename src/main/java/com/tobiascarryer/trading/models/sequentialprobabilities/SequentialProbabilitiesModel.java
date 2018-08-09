@@ -1,13 +1,10 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,22 +18,14 @@ import com.tobiascarryer.trading.models.ModelPrediction;
  */
 public class SequentialProbabilitiesModel {
 	
-	private static double percentageOfDataForTraining = 0.8;
-	
 	private Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks;
-	
-	public static void main(String[] args) throws IOException {
-		String savedModelFileName = "daily_SHOP-model.txt";
-		String binsFileName = "daily_SHOP-bins.txt";
-		generateModel(savedModelFileName, binsFileName);
-	}
 	
     public SequentialProbabilitiesModel(String savedModelFileName) throws IOException {
     	File savedModelFile = new File(savedModelFileName);
     	this.chainLinks = loadModelFrom(savedModelFile);
     }
     
-    private SequentialProbabilitiesModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks) {
+    public SequentialProbabilitiesModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks) {
     	this.chainLinks = chainLinks;
     }
     
@@ -56,75 +45,10 @@ public class SequentialProbabilitiesModel {
     	return links;
     }
     
-    public static void generateModel(String savedModelFileName, String binsFileName) throws IOException {
-    	PercentageChangeBin[] bins = PercentageChangeBinFile.loadBinsFrom(binsFileName);
-    	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining = new HashMap<>();
-    	
-    	int minLength = SequentialProbabilitiesHyperparameters.minBinsInSequence;
-    	int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
-    	
-    	for( int i = maxLength-1; i < bins.length * percentageOfDataForTraining; i++ ) {
-    		PercentageChangeBin[] latestBins = new PercentageChangeBin[maxLength];
-    		int binsAddedToLatestBins = 0;
-    		for( int n = i-maxLength+1; n <= i; n++ ) {
-    			latestBins[latestBins.length-binsAddedToLatestBins-1] = bins[n];
-    			binsAddedToLatestBins++;
-    		}
-    		BinSequence[] sequences = getSequences(latestBins, minLength, maxLength);
-    		for( BinSequence sequence: sequences ) {
-    			Boolean isPositiveBin = bins[i+1].isPositiveBin();
-    			if( isPositiveBin != null ) {
-    				BooleanMarkovChainLink<BinSequence> defaultChainLink = new BooleanMarkovChainLink<BinSequence>(sequence);
-    				BooleanMarkovChainLink<BinSequence> chainLink = chainLinksInTraining.getOrDefault(sequence, defaultChainLink);
-    				chainLink.increaseOccurencesFor(isPositiveBin);
-    				chainLinksInTraining.put(sequence, chainLink);
-    			}
-    		}
-    	}
-    	
-    	// Test model
-    	SequentialProbabilitiesModel model = new SequentialProbabilitiesModel(chainLinksInTraining);
-    	double rightUpwardPredictions = 0;
-    	double totalUpwardPredictions = 0;
-    	double rightDownwardPredictions = 0;
-    	double totalDownwardPredictions = 0;
-    	
-    	for( int i = (int) (bins.length * percentageOfDataForTraining); i < bins.length-1; i++ ) {
-    		PercentageChangeBin[] latestBins = new PercentageChangeBin[maxLength];
-    		int binsAddedToLatestBins = 0;
-    		for( int n = i-maxLength+1; n <= i; n++ ) {
-    			latestBins[latestBins.length-binsAddedToLatestBins-1] = bins[n];
-    			binsAddedToLatestBins++;
-    		}
-    		ModelPrediction<Boolean> prediction = model.predictNext(latestBins);
-    		if( prediction != null && prediction.getItem() != null ) {
-    			Boolean isPositiveBin = bins[i+1].isPositiveBin();
-    			if( isPositiveBin != null && isPositiveBin == true ) {
-    				if( isPositiveBin == prediction.getItem() )
-    					rightUpwardPredictions += 1;
-    				totalUpwardPredictions += 1;
-    			} else if( isPositiveBin != null && isPositiveBin == false ) {
-    				if( isPositiveBin == prediction.getItem() )
-    					rightDownwardPredictions += 1;
-    				totalDownwardPredictions += 1;
-    			}
-    		}
-    	}
-    	
-    	System.out.println("Accuracy (Upwards): "+rightUpwardPredictions/totalUpwardPredictions);
-    	System.out.println("Accuracy (Downwards): "+rightDownwardPredictions/totalDownwardPredictions);
-    	
-    	BufferedWriter w = new BufferedWriter(new FileWriter(savedModelFileName));
-    	for( BooleanMarkovChainLink<BinSequence> chainLink: chainLinksInTraining.values() ) {
-    		w.write(chainLink.toString()+"\n");
-    	}
-     	w.close();
-    }
-    
     public ModelPrediction<Boolean> predictNext(PercentageChangeBin[] latestBins) {
     	int minLength = SequentialProbabilitiesHyperparameters.minBinsInSequence;
     	int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
-    	BinSequence[] sequences = getSequences(latestBins, minLength, maxLength);
+    	BinSequence[] sequences = BinSequence.getSequences(latestBins, minLength, maxLength);
     	
     	List<ModelPrediction<Boolean>> upwardPredictions = new ArrayList<>();
     	List<ModelPrediction<Boolean>> downwardPredictions = new ArrayList<>();
@@ -191,19 +115,5 @@ public class SequentialProbabilitiesModel {
     		sum += d;
     	}
     	return sum;
-    }
-    
-    /**
-     * @param latestBins Array of bins, smaller indices are more recent.
-     * @param minLength
-     * @param maxLength
-     * @return String array. Each index is a sequence based on a different amount of previous bins.
-     */
-    public static BinSequence[] getSequences(PercentageChangeBin[] latestBins, int minLength, int maxLength) {
-    	BinSequence[] sequences = new BinSequence[maxLength-minLength + 1];
-    	for( int i = 0; i < sequences.length; i++ ) {
-    		sequences[i] = new BinSequence(Arrays.copyOfRange(latestBins, 0, i + minLength));
-    	}
-    	return sequences;
     }
 }

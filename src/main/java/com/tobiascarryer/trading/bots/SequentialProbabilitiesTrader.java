@@ -9,7 +9,7 @@ import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChange
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBinFactory;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesModel;
-import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesPreCalculatedParameters;
+import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesBinThresholds;
 
 public class SequentialProbabilitiesTrader {
 	
@@ -20,7 +20,7 @@ public class SequentialProbabilitiesTrader {
 	
 	public SequentialProbabilitiesTrader(String precalculatedParametersFileName, String savedModelFileName) throws IOException {
 		File precalculatedParametersFile = new File(precalculatedParametersFileName);
-    	SequentialProbabilitiesPreCalculatedParameters precalculatedParameters = SequentialProbabilitiesPreCalculatedParameters.loadFrom(precalculatedParametersFile);
+    	SequentialProbabilitiesBinThresholds precalculatedParameters = SequentialProbabilitiesBinThresholds.loadFrom(precalculatedParametersFile);
     	double[] posChangeThresholds = precalculatedParameters.posThresholds;
     	double[] negChangeThresholds = precalculatedParameters.negThresholds;
     	factory = new PercentageChangeBinFactory(posChangeThresholds, negChangeThresholds);

@@ -19,37 +19,30 @@ import com.tobiascarryer.trading.HelperMethods;
 import com.tobiascarryer.trading.charts.Candle;
 import com.tobiascarryer.trading.exchanges.AlphaVantageDataPoint;
 
-public final class SequentialProbabilitiesPreCalculatedParameters {
-	
-	static String savedParametersFileNameAppend = "-precalc-params.csv";
+public final class SequentialProbabilitiesBinThresholds {
 	
 	public double[] posThresholds;
 	public double[] negThresholds;
 	
-	public SequentialProbabilitiesPreCalculatedParameters(double[] posThresholds, double[] negThresholds) {
+	public SequentialProbabilitiesBinThresholds(double[] posThresholds, double[] negThresholds) {
 		this.posThresholds = posThresholds;
 		this.negThresholds = negThresholds;
 	}
 	
-	public static void main(String[] args) throws IOException {
-		calculateParameters(SequentialProbabilitiesHyperparameters.numberOfBinIntervals);
-	}
-	
-	public static SequentialProbabilitiesPreCalculatedParameters loadFrom(File precalculatedParametersFile) throws IOException {
-		BufferedReader r = new BufferedReader(new FileReader(precalculatedParametersFile));
+	public static SequentialProbabilitiesBinThresholds loadFrom(File binThresholdsFile) throws IOException {
+		BufferedReader r = new BufferedReader(new FileReader(binThresholdsFile));
 		
 		double[] posChanges = convertToDoubleArray(r.readLine().split(","));
 		double[] negChanges = convertToDoubleArray(r.readLine().split(","));
 		
 		r.close();
 		
-		return new SequentialProbabilitiesPreCalculatedParameters(posChanges, negChanges);
+		return new SequentialProbabilitiesBinThresholds(posChanges, negChanges);
 	}
 	
-	private static void calculateParameters(int numberOfBinIntervals) throws IOException {
-		File historicalDataFile = HelperMethods.chooseFile();
-		
+	public static void writeBinThresholdsFile(int numberOfBinIntervals, File parentDirectory, String historicalDataFileName, String binThresholdsFileName) throws IOException {
 		// Read file backwards to get oldest data first
+		File historicalDataFile = new File(parentDirectory, historicalDataFileName);
 		final ReversedLinesFileReader r = new ReversedLinesFileReader(historicalDataFile, Charset.forName("UTF-8"));
 		String line = r.readLine(); // First line is column labels
 		
@@ -81,8 +74,7 @@ public final class SequentialProbabilitiesPreCalculatedParameters {
 		Collections.sort(negChanges);
 		Collections.reverse(negChanges);
 		
-		String fileName = precalculatedParametersFileNameFromHistoricalDataFileName(historicalDataFile);
-		BufferedWriter w = new BufferedWriter(new FileWriter(fileName));
+		BufferedWriter w = new BufferedWriter(new FileWriter(new File(parentDirectory, binThresholdsFileName)));
 		w.write(doubleArrayToWriteableString(createThresholds(posChanges, numberOfBinIntervals))+"\n");
 		w.write(doubleArrayToWriteableString(createThresholds(negChanges, numberOfBinIntervals))+"\n");
 		w.close();
@@ -105,10 +97,6 @@ public final class SequentialProbabilitiesPreCalculatedParameters {
 			thresholds[i-1] = percentageChanges.get(index * i);
 		}
 		return thresholds;
-	}
-	
-	private static String precalculatedParametersFileNameFromHistoricalDataFileName(File historicalDataFile) {
-		return HelperMethods.getFileNameWithoutExtension(historicalDataFile) + savedParametersFileNameAppend;
 	}
 	
 	private static double[] convertToDoubleArray(String[] stringArray) {
