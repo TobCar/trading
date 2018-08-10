@@ -6,12 +6,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.FileUtils;
+
+import com.tobiascarryer.trading.ApiSecrets;
 import com.tobiascarryer.trading.HelperMethods;
 import com.tobiascarryer.trading.models.BooleanMarkovChainLink;
 import com.tobiascarryer.trading.models.ModelPrediction;
@@ -31,13 +38,44 @@ public class SequentialProbabilitiesTool {
 		// Select the directory where the files described above are stored.
 		File parentDirectory = HelperMethods.chooseDirectory();
 		
+		downloadAlphaVantageHistoricalDataForAllStocks(parentDirectory);
 		createModelsAndDetermineWhatStocksToObserve(parentDirectory);
 	}
 	
-	private static void createModelsAndDetermineWhatStocksToObserve(File parentDirectory) throws IOException {
-		File allStocksFile = new File(parentDirectory, allStocksFileName);
-		List<String> allStocks = Files.readAllLines(allStocksFile.toPath());
+	private static void downloadAlphaVantageHistoricalDataForAllStocks(File parentDirectory) throws IOException {
+		List<String> allStocks = getAllStocks(parentDirectory);
 		
+		int apiCalls = 0;
+		for( String ticker: allStocks) {
+			try {
+				// If there are problems with SSL certificates, follow this guide: https://www.alpha-vantage.community/post/getting-ssl-to-work-java-eclipse-windows-alphavantage-lets-encrypt-9783025
+				URL url = new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+ticker+"&apikey="+ApiSecrets.alphaVantageKey+"&datatype=csv&outputsize=full");
+				File historicalDataFile = new File(parentDirectory, createFileName(fileNameBase, ticker, ".csv"));
+				System.out.println("Downloading historical data for "+ticker);
+				FileUtils.copyURLToFile(url, historicalDataFile);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				System.out.println("MalformedURLException while downloading historical data for "+ticker);
+			} catch (IOException e2) {
+				e2.printStackTrace();
+				System.out.println("IOException while downloading historical data for "+ticker);
+			}
+			apiCalls++;
+			if( apiCalls == 5 ) {
+				apiCalls = 0;
+				System.out.println("Throttling API calls.");
+				try {
+					long oneMinute = 60000;
+					Thread.sleep(oneMinute);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	private static void createModelsAndDetermineWhatStocksToObserve(File parentDirectory) throws IOException {
+		List<String> allStocks = getAllStocks(parentDirectory);
 		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
 		
 		for( String ticker: allStocks ) {
@@ -62,6 +100,11 @@ public class SequentialProbabilitiesTool {
 		}
 		
 		writeStocksToObserve(stocksToObserve, parentDirectory);
+	}
+	
+	private static List<String> getAllStocks(File parentDirectory) throws IOException {
+		File allStocksFile = new File(parentDirectory, allStocksFileName);
+		return Files.readAllLines(allStocksFile.toPath());
 	}
 	
 	public static Map<String, ModelTestingResult> loadStocksToObserve(File parentDirectory) {
