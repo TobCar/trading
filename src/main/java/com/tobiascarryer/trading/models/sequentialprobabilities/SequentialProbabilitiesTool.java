@@ -1,13 +1,16 @@
 package com.tobiascarryer.trading.models.sequentialprobabilities;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.tobiascarryer.trading.HelperMethods;
 import com.tobiascarryer.trading.models.BooleanMarkovChainLink;
@@ -17,30 +20,95 @@ public class SequentialProbabilitiesTool {
 	
 	private static double percentageOfDataForTraining = 0.8;
 	
+	private static String allStocksFileName = "all-stocks.txt";
+	private static String stocksToObserveFileName = "stocks-to-observe.csv";
+	private static String fileNameBase = "daily_STOCK";
+	private static String binThresholdsFileNameAppend = "bin-thresholds.csv";
+	private static String binsFileNameAppend = "bins.txt";
+	private static String modelFileNameAppend = "model.txt";
+	
 	public static void main(String[] args) throws IOException {
-		String fileNameBase = "daily_STOCK";
-		String stocksToObserveFileName = "stocks-to-observe.txt";
-		String binThresholdsFileNameAppend = "bin-thresholds.csv";
-		String binsFileNameAppend = "bins.txt";
-		String modelFileNameAppend = "model.txt";
-		
 		// Select the directory where the files described above are stored.
 		File parentDirectory = HelperMethods.chooseDirectory();
 		
-		File stocksToObserveFile = new File(parentDirectory, stocksToObserveFileName);
-		List<String> stockTickers = Files.readAllLines(stocksToObserveFile.toPath());
+		createModelsAndDetermineWhatStocksToObserve(parentDirectory);
+	}
+	
+	private static void createModelsAndDetermineWhatStocksToObserve(File parentDirectory) throws IOException {
+		File allStocksFile = new File(parentDirectory, allStocksFileName);
+		List<String> allStocks = Files.readAllLines(allStocksFile.toPath());
 		
-		for( String ticker: stockTickers ) {
-			System.out.println("SequentialProbabilitiesTool: Creating model for "+ticker);
-			String historicalDataFileName = createFileName(fileNameBase, ticker, ".csv");
-			String binThresholdsFileName = createFileName(fileNameBase, ticker, binThresholdsFileNameAppend);
-			String binsFileName = createFileName(fileNameBase, ticker, binsFileNameAppend);
-			String modelFileName = createFileName(fileNameBase, ticker, modelFileNameAppend);
-			
-			SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
-			PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
-			generateModel(parentDirectory, modelFileName, binsFileName);
+		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
+		
+		for( String ticker: allStocks ) {
+			ModelTestingResult testingResult = generateModelFromFilesIn(parentDirectory, ticker);
+			if( testingResult != ModelTestingResult.DO_NOT_USE ) {
+				stocksToObserve.put(ticker, testingResult);
+			} else {
+				// Delete useless model and data
+				String historicalDataFileName = createFileName(fileNameBase, ticker, ".csv");
+				File historicalDataFile = new File(parentDirectory, historicalDataFileName);
+				historicalDataFile.delete();
+				String binThresholdsFileName = createFileName(fileNameBase, ticker, binThresholdsFileNameAppend);
+				File binThresholdsFile = new File(parentDirectory, binThresholdsFileName);
+				binThresholdsFile.delete();
+				String binsFileName = createFileName(fileNameBase, ticker, binsFileNameAppend);
+				File binsFile = new File(parentDirectory, binsFileName);
+				binsFile.delete();
+				String modelFileName = createFileName(fileNameBase, ticker, modelFileNameAppend);
+				File modelFile = new File(parentDirectory, modelFileName);
+				modelFile.delete();
+			}
 		}
+		
+		writeStocksToObserve(stocksToObserve, parentDirectory);
+	}
+	
+	public static Map<String, ModelTestingResult> loadStocksToObserve(File parentDirectory) {
+		File stocksToObserveFile = new File(parentDirectory, stocksToObserveFileName);
+		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
+		
+		try {
+			BufferedReader r = new BufferedReader(new FileReader(stocksToObserveFile));
+			String line = r.readLine();
+			while( line != null ) {
+				String[] parts = line.split(",");
+				stocksToObserve.put(parts[0], ModelTestingResult.valueOf(parts[1]));
+				line = r.readLine();
+			}
+			r.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Could not write to "+stocksToObserveFile.getAbsolutePath());
+		}
+		
+		return stocksToObserve;
+	}
+	
+	private static void writeStocksToObserve(Map<String, ModelTestingResult> stocksToObserve, File parentDirectory) {
+		File stocksToObserveFile = new File(parentDirectory, stocksToObserveFileName);
+		try {
+			BufferedWriter w = new BufferedWriter(new FileWriter(stocksToObserveFile));
+			for( Entry<String, ModelTestingResult> entry: stocksToObserve.entrySet() ) {
+				w.write(entry.getKey()+","+entry.getValue()+"\n");
+			}
+			w.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Could not write to "+stocksToObserveFile.getAbsolutePath());
+		}
+	}
+	
+	private static ModelTestingResult generateModelFromFilesIn(File parentDirectory, String ticker) throws IOException {
+		System.out.println("SequentialProbabilitiesTool: Creating model for "+ticker);
+		String historicalDataFileName = createFileName(fileNameBase, ticker, ".csv");
+		String binThresholdsFileName = createFileName(fileNameBase, ticker, binThresholdsFileNameAppend);
+		String binsFileName = createFileName(fileNameBase, ticker, binsFileNameAppend);
+		String modelFileName = createFileName(fileNameBase, ticker, modelFileNameAppend);
+		
+		SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
+		PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
+		return generateModel(parentDirectory, modelFileName, binsFileName);
 	}
 	
 	/**
@@ -56,7 +124,7 @@ public class SequentialProbabilitiesTool {
 		return modifiedBase + "-" + append;
 	}
 
-	public static void generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
+	public static ModelTestingResult generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
     	PercentageChangeBin[] bins = PercentageChangeBinFile.loadBinsFrom(parentDirectory, binsFileName);
     	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining = new HashMap<>();
     	
@@ -83,6 +151,8 @@ public class SequentialProbabilitiesTool {
     	}
     	
     	// Test model
+    	ModelTestingResult testingResult = ModelTestingResult.DO_NOT_USE;
+    	
     	int startingIndex = (int) (bins.length * percentageOfDataForTraining) - SequentialProbabilitiesHyperparameters.maxBinsInSequence + 1;
     	int numberOfBinsToTestWith = bins.length - startingIndex;
     	if( numberOfBinsToTestWith > 0 ) {
@@ -90,7 +160,7 @@ public class SequentialProbabilitiesTool {
     		for( int i = 0; i < binsToTestWith.length; i++ ) {
     			binsToTestWith[i] = bins[startingIndex + i];
     		}
-    		testModel(chainLinksInTraining, binsToTestWith);
+    		testingResult = testModel(chainLinksInTraining, binsToTestWith);
     	}
     	
     	BufferedWriter w = new BufferedWriter(new FileWriter(new File(parentDirectory, savedModelFileName)));
@@ -98,6 +168,8 @@ public class SequentialProbabilitiesTool {
     		w.write(chainLink.toString()+"\n");
     	}
      	w.close();
+     	
+     	return testingResult;
     }
 	
 	private static ModelTestingResult testModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks, PercentageChangeBin[] binsToTestWith) {
