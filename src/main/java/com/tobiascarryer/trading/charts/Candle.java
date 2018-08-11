@@ -28,4 +28,18 @@ public class Candle {
 	public BigDecimal getClose() {
 		return this.close;
 	}
+	
+	public static Candle parse(String line) {
+		String[] values = line.split(",");
+		BigDecimal open = new BigDecimal(values[0]);
+		BigDecimal high = new BigDecimal(values[1]);
+		BigDecimal low = new BigDecimal(values[2]);
+		BigDecimal close = new BigDecimal(values[3]);
+		return new Candle(high, low, open, close);
+	}
+	
+	@Override
+	public String toString() {
+		return open + "," + high + "," + low + "," + close;
+	}
 }
