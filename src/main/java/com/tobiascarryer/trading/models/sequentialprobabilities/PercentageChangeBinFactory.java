@@ -28,7 +28,7 @@ public class PercentageChangeBinFactory {
 	public PercentageChangeBinFactory(double[] posChangeThresholds, double[] negChangeThresholds) {
 		this.intervalThresholdsPosChange = posChangeThresholds;
 		this.intervalThresholdsNegChange = negChangeThresholds;
-		printIntervals();
+		// printIntervals();
 	}
 	
 	public static PercentageChangeBinFactory loadFrom(File binThresholdsFile) throws IOException {
