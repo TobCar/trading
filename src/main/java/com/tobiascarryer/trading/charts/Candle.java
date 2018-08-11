@@ -29,7 +29,7 @@ public class Candle {
 		return this.close;
 	}
 	
-	public static Candle parse(String line) {
+	public static Candle parseLine(String line) {
 		String[] values = line.split(",");
 		BigDecimal open = new BigDecimal(values[0]);
 		BigDecimal high = new BigDecimal(values[1]);

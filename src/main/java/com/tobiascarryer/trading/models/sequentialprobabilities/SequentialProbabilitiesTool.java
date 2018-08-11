@@ -6,10 +6,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
@@ -22,17 +20,11 @@ import com.tobiascarryer.trading.ApiSecrets;
 import com.tobiascarryer.trading.HelperMethods;
 import com.tobiascarryer.trading.models.BooleanMarkovChainLink;
 import com.tobiascarryer.trading.models.ModelPrediction;
+import com.tobiascarryer.trading.models.ModelTestingResult;
 
 public class SequentialProbabilitiesTool {
 	
 	private static double percentageOfDataForTraining = 0.8;
-	
-	private static String allStocksFileName = "all-stocks.txt";
-	private static String stocksToObserveFileName = "stocks-to-observe.csv";
-	private static String fileNameBase = "daily_STOCK";
-	private static String binThresholdsFileNameAppend = "bin-thresholds.csv";
-	private static String binsFileNameAppend = "bins.txt";
-	private static String modelFileNameAppend = "model.txt";
 	
 	public static void main(String[] args) throws IOException {
 		// Select the directory where the files described above are stored.
@@ -50,7 +42,7 @@ public class SequentialProbabilitiesTool {
 			try {
 				// If there are problems with SSL certificates, follow this guide: https://www.alpha-vantage.community/post/getting-ssl-to-work-java-eclipse-windows-alphavantage-lets-encrypt-9783025
 				URL url = new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+ticker+"&apikey="+ApiSecrets.alphaVantageKey+"&datatype=csv&outputsize=full");
-				File historicalDataFile = new File(parentDirectory, createFileName(fileNameBase, ticker, ".csv"));
+				File historicalDataFile = new File(parentDirectory, SequentialProbabilitiesFileNames.historicalDataFileName(ticker));
 				System.out.println("Downloading historical data for "+ticker);
 				FileUtils.copyURLToFile(url, historicalDataFile);
 			} catch (MalformedURLException e) {
@@ -61,7 +53,7 @@ public class SequentialProbabilitiesTool {
 				System.out.println("IOException while downloading historical data for "+ticker);
 			}
 			apiCalls++;
-			if( apiCalls == 5 ) {
+			if( apiCalls == 4 ) {
 				apiCalls = 0;
 				System.out.println("Throttling API calls.");
 				try {
@@ -84,16 +76,16 @@ public class SequentialProbabilitiesTool {
 				stocksToObserve.put(ticker, testingResult);
 			} else {
 				// Delete useless model and data
-				String historicalDataFileName = createFileName(fileNameBase, ticker, ".csv");
+				String historicalDataFileName = SequentialProbabilitiesFileNames.historicalDataFileName(ticker);
 				File historicalDataFile = new File(parentDirectory, historicalDataFileName);
 				historicalDataFile.delete();
-				String binThresholdsFileName = createFileName(fileNameBase, ticker, binThresholdsFileNameAppend);
+				String binThresholdsFileName = SequentialProbabilitiesFileNames.binThresholdsFileName(ticker);
 				File binThresholdsFile = new File(parentDirectory, binThresholdsFileName);
 				binThresholdsFile.delete();
-				String binsFileName = createFileName(fileNameBase, ticker, binsFileNameAppend);
+				String binsFileName = SequentialProbabilitiesFileNames.binsFileName(ticker);
 				File binsFile = new File(parentDirectory, binsFileName);
 				binsFile.delete();
-				String modelFileName = createFileName(fileNameBase, ticker, modelFileNameAppend);
+				String modelFileName = SequentialProbabilitiesFileNames.savedModelFileName(ticker);
 				File modelFile = new File(parentDirectory, modelFileName);
 				modelFile.delete();
 			}
@@ -103,12 +95,12 @@ public class SequentialProbabilitiesTool {
 	}
 	
 	private static List<String> getAllStocks(File parentDirectory) throws IOException {
-		File allStocksFile = new File(parentDirectory, allStocksFileName);
+		File allStocksFile = new File(parentDirectory, SequentialProbabilitiesFileNames.allStocksFileName);
 		return Files.readAllLines(allStocksFile.toPath());
 	}
 	
-	public static Map<String, ModelTestingResult> loadStocksToObserve(File parentDirectory) {
-		File stocksToObserveFile = new File(parentDirectory, stocksToObserveFileName);
+	public static Map<String, ModelTestingResult> getStocksToObserve(File parentDirectory) {
+		File stocksToObserveFile = new File(parentDirectory, SequentialProbabilitiesFileNames.stocksToObserveFileName);
 		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
 		
 		try {
@@ -129,7 +121,7 @@ public class SequentialProbabilitiesTool {
 	}
 	
 	private static void writeStocksToObserve(Map<String, ModelTestingResult> stocksToObserve, File parentDirectory) {
-		File stocksToObserveFile = new File(parentDirectory, stocksToObserveFileName);
+		File stocksToObserveFile = new File(parentDirectory, SequentialProbabilitiesFileNames.stocksToObserveFileName);
 		try {
 			BufferedWriter w = new BufferedWriter(new FileWriter(stocksToObserveFile));
 			for( Entry<String, ModelTestingResult> entry: stocksToObserve.entrySet() ) {
@@ -144,27 +136,14 @@ public class SequentialProbabilitiesTool {
 	
 	private static ModelTestingResult generateModelFromFilesIn(File parentDirectory, String ticker) throws IOException {
 		System.out.println("SequentialProbabilitiesTool: Creating model for "+ticker);
-		String historicalDataFileName = createFileName(fileNameBase, ticker, ".csv");
-		String binThresholdsFileName = createFileName(fileNameBase, ticker, binThresholdsFileNameAppend);
-		String binsFileName = createFileName(fileNameBase, ticker, binsFileNameAppend);
-		String modelFileName = createFileName(fileNameBase, ticker, modelFileNameAppend);
+		String historicalDataFileName = SequentialProbabilitiesFileNames.historicalDataFileName(ticker);
+		String binThresholdsFileName = SequentialProbabilitiesFileNames.binThresholdsFileName(ticker);
+		String binsFileName = SequentialProbabilitiesFileNames.binsFileName(ticker);
+		String modelFileName = SequentialProbabilitiesFileNames.savedModelFileName(ticker);
 		
 		SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
 		PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
 		return generateModel(parentDirectory, modelFileName, binsFileName);
-	}
-	
-	/**
-	 * @param base The start of the file name where STOCK represents where a ticker should be inserted.
-	 * @param stockTicker
-	 * @param append
-	 * @return String
-	 */
-	public static String createFileName(String base, String stockTicker, String append) {
-		String modifiedBase = base.replace("STOCK", stockTicker);
-		if( append.startsWith(".") )
-			return modifiedBase + append;
-		return modifiedBase + "-" + append;
 	}
 
 	public static ModelTestingResult generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
@@ -267,9 +246,5 @@ public class SequentialProbabilitiesTool {
 		}
 		
 		return latestBins;
-	}
-	
-	private enum ModelTestingResult {
-		USE_UPWARDS, USE_DOWNWARDS, DO_NOT_USE
 	}
 }

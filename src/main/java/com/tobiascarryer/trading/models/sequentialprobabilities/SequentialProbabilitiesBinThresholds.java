@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
-import com.tobiascarryer.trading.HelperMethods;
 import com.tobiascarryer.trading.charts.Candle;
 import com.tobiascarryer.trading.exchanges.AlphaVantageDataPoint;
 
@@ -43,7 +42,7 @@ public final class SequentialProbabilitiesBinThresholds {
 	public static void writeBinThresholdsFile(int numberOfBinIntervals, File parentDirectory, String historicalDataFileName, String binThresholdsFileName) throws IOException {
 		// Read file backwards to get oldest data first
 		File historicalDataFile = new File(parentDirectory, historicalDataFileName);
-		final ReversedLinesFileReader r = new ReversedLinesFileReader(historicalDataFile, Charset.forName("UTF-8"));
+		ReversedLinesFileReader r = new ReversedLinesFileReader(historicalDataFile, Charset.forName("UTF-8"));
 		String line = r.readLine(); // First line is column labels
 		
 		Candle previousCandle = null;
