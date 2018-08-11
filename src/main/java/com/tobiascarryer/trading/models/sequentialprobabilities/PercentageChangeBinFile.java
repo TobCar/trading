@@ -46,6 +46,14 @@ public class PercentageChangeBinFile {
 		return binsArray;
 	}
 	
+	/**
+	 * Writes the bins to a file. Each bin has its own line. The bins are ordered from oldest to newest.
+	 * @param parentDirectory The directory containing the historical data and the bin thresholds. The bins will be written to a file in this directory.
+	 * @param historicalDataFileName
+	 * @param binThresholdsFileName
+	 * @param binsFileName
+	 * @throws IOException
+	 */
 	public static void writeBinsFile(File parentDirectory, String historicalDataFileName, String binThresholdsFileName, String binsFileName) throws IOException {
 		File historicalDataFile = new File(parentDirectory, historicalDataFileName);
 		File binThresholdsFile = new File(parentDirectory, binThresholdsFileName);
@@ -53,7 +61,7 @@ public class PercentageChangeBinFile {
 		
 		// Read file backwards to get oldest data first
 		final ReversedLinesFileReader r = new ReversedLinesFileReader(historicalDataFile, Charset.forName("UTF-8"));
-		String line = r.readLine(); // First line is column labels
+		String line = r.readLine();
 		
 		Candle previousCandle = null;
 		double[] posThresholds = binThresholds.posThresholds;
