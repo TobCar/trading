@@ -3,6 +3,7 @@ package com.tobiascarryer.trading.models.sequentialprobabilities;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -141,9 +142,19 @@ public class SequentialProbabilitiesTool {
 		String binsFileName = SequentialProbabilitiesFileNames.binsFileName(ticker);
 		String modelFileName = SequentialProbabilitiesFileNames.savedModelFileName(ticker);
 		
-		SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
-		PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
-		return generateModel(parentDirectory, modelFileName, binsFileName);
+		try {
+			SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
+			PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
+			return generateModel(parentDirectory, modelFileName, binsFileName);
+		} catch (ArrayIndexOutOfBoundsException|FileNotFoundException ex) {
+			// ArrayIndexOutOfBoundsException means a historical data file could not be parsed
+			// likely because the ticker does not exist in AlphaVantage or because of API throttling.
+			// FileNotFoundException is when a stock's historical data does not exist.
+			// It has either not been downloaded or this function already ran and determined
+			// it should not be used and deleted the historical data.
+			ex.printStackTrace();
+			return ModelTestingResult.DO_NOT_USE;
+		}
 	}
 
 	public static ModelTestingResult generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
