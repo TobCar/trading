@@ -11,8 +11,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
@@ -25,6 +27,8 @@ import com.tobiascarryer.trading.models.ModelTestingResult;
 
 public class SequentialProbabilitiesTool {
 	
+	// generateModel() determines which direction to use the model
+	// in from the test data portion.
 	private static double percentageOfDataForTraining = 0.8;
 	
 	public static void main(String[] args) throws IOException {
@@ -69,11 +73,11 @@ public class SequentialProbabilitiesTool {
 	
 	private static void createModelsAndDetermineWhatStocksToObserve(File parentDirectory) throws IOException {
 		List<String> allStocks = getAllStocks(parentDirectory);
-		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
+		Map<String, Set<ModelTestingResult>> stocksToObserve = new HashMap<>();
 		
 		for( String ticker: allStocks ) {
-			ModelTestingResult testingResult = generateModelFromFilesIn(parentDirectory, ticker);
-			if( testingResult != ModelTestingResult.DO_NOT_USE ) {
+			Set<ModelTestingResult> testingResult = generateModelFromFilesIn(parentDirectory, ticker);
+			if( !testingResult.contains(ModelTestingResult.DO_NOT_USE) ) {
 				stocksToObserve.put(ticker, testingResult);
 			} else {
 				// Delete useless model and data
@@ -100,16 +104,18 @@ public class SequentialProbabilitiesTool {
 		return Files.readAllLines(allStocksFile.toPath());
 	}
 	
-	public static Map<String, ModelTestingResult> getStocksToObserve(File parentDirectory) {
+	public static Map<String, Set<ModelTestingResult>> getStocksToObserve(File parentDirectory) {
 		File stocksToObserveFile = new File(parentDirectory, SequentialProbabilitiesFileNames.stocksToObserveFileName);
-		Map<String, ModelTestingResult> stocksToObserve = new HashMap<>();
+		Map<String, Set<ModelTestingResult>> stocksToObserve = new HashMap<>();
 		
 		try {
 			BufferedReader r = new BufferedReader(new FileReader(stocksToObserveFile));
 			String line = r.readLine();
 			while( line != null ) {
 				String[] parts = line.split(",");
-				stocksToObserve.put(parts[0], ModelTestingResult.valueOf(parts[1]));
+				String ticker = parts[0];
+				Set<ModelTestingResult> loadedTestingResults = parseJoinedModelTestingResults(parts[1]);
+				stocksToObserve.put(ticker, loadedTestingResults);
 				line = r.readLine();
 			}
 			r.close();
@@ -121,12 +127,12 @@ public class SequentialProbabilitiesTool {
 		return stocksToObserve;
 	}
 	
-	private static void writeStocksToObserve(Map<String, ModelTestingResult> stocksToObserve, File parentDirectory) {
+	private static void writeStocksToObserve(Map<String, Set<ModelTestingResult>> stocksToObserve, File parentDirectory) {
 		File stocksToObserveFile = new File(parentDirectory, SequentialProbabilitiesFileNames.stocksToObserveFileName);
 		try {
 			BufferedWriter w = new BufferedWriter(new FileWriter(stocksToObserveFile));
-			for( Entry<String, ModelTestingResult> entry: stocksToObserve.entrySet() ) {
-				w.write(entry.getKey()+","+entry.getValue()+"\n");
+			for( Entry<String, Set<ModelTestingResult>> entry: stocksToObserve.entrySet() ) {
+				w.write(entry.getKey()+","+joinModelTestingResults(entry.getValue())+"\n");
 			}
 			w.close();
 		} catch (IOException e) {
@@ -135,7 +141,7 @@ public class SequentialProbabilitiesTool {
 		}
 	}
 	
-	private static ModelTestingResult generateModelFromFilesIn(File parentDirectory, String ticker) throws IOException {
+	private static Set<ModelTestingResult> generateModelFromFilesIn(File parentDirectory, String ticker) throws IOException {
 		System.out.println("SequentialProbabilitiesTool: Creating model for "+ticker);
 		String historicalDataFileName = SequentialProbabilitiesFileNames.historicalDataFileName(ticker);
 		String binThresholdsFileName = SequentialProbabilitiesFileNames.binThresholdsFileName(ticker);
@@ -153,11 +159,13 @@ public class SequentialProbabilitiesTool {
 			// It has either not been downloaded or this function already ran and determined
 			// it should not be used and deleted the historical data.
 			ex.printStackTrace();
-			return ModelTestingResult.DO_NOT_USE;
+			Set<ModelTestingResult> result = new HashSet<>();
+			result.add(ModelTestingResult.DO_NOT_USE);
+			return result;
 		}
 	}
 
-	public static ModelTestingResult generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
+	public static Set<ModelTestingResult> generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
     	PercentageChangeBin[] bins = PercentageChangeBinFile.loadBinsFrom(parentDirectory, binsFileName);
     	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining = new HashMap<>();
     	
@@ -184,7 +192,8 @@ public class SequentialProbabilitiesTool {
     	}
     	
     	// Test model
-    	ModelTestingResult testingResult = ModelTestingResult.DO_NOT_USE;
+    	Set<ModelTestingResult> testingResult = new HashSet<>();
+    	testingResult.add(ModelTestingResult.DO_NOT_USE);
     	
     	int startingIndex = (int) (bins.length * percentageOfDataForTraining) - SequentialProbabilitiesHyperparameters.maxBinsInSequence + 1;
     	int numberOfBinsToTestWith = bins.length - startingIndex;
@@ -205,7 +214,7 @@ public class SequentialProbabilitiesTool {
      	return testingResult;
     }
 	
-	private static ModelTestingResult testModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks, PercentageChangeBin[] binsToTestWith) {
+	private static Set<ModelTestingResult> testModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks, PercentageChangeBin[] binsToTestWith) {
 		SequentialProbabilitiesModel model = new SequentialProbabilitiesModel(chainLinks);
     	double rightUpwardPredictions = 0;
     	double totalUpwardPredictions = 0;
@@ -237,13 +246,18 @@ public class SequentialProbabilitiesTool {
     	System.out.println("Accuracy (Upwards): "+upwardsAccuracy);
     	System.out.println("Accuracy (Downwards): "+downwardsAccuracy);
     	
-    	if( upwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence ) {
-    		return ModelTestingResult.USE_UPWARDS;
-    	} else if( downwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence ) {
-    		return ModelTestingResult.USE_DOWNWARDS;
-    	} else {
-    		return ModelTestingResult.DO_NOT_USE;
-    	}
+    	Set<ModelTestingResult> results = new HashSet<>();
+    	
+    	if( upwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence )
+    		results.add(ModelTestingResult.USE_UPWARDS);
+    		
+    	if( downwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence )
+    		results.add(ModelTestingResult.USE_DOWNWARDS);
+
+    	if( results.isEmpty() )
+    		results.add(ModelTestingResult.DO_NOT_USE);
+    	
+    	return results;
 	}
 	
 	public static PercentageChangeBin[] getLatestBins(int latestBinIndex, PercentageChangeBin[] bins) {
@@ -257,5 +271,25 @@ public class SequentialProbabilitiesTool {
 		}
 		
 		return latestBins;
+	}
+	
+	public static String joinModelTestingResults(Set<ModelTestingResult> results) {
+		String joinedTestingResults = "";
+		int i = 0;
+		for( ModelTestingResult testingResult: results ) {
+			joinedTestingResults += testingResult;
+			i++;
+			if( i < results.size() )
+				joinedTestingResults += "|";
+		}
+		return joinedTestingResults;
+	}
+	
+	public static Set<ModelTestingResult> parseJoinedModelTestingResults(String joinedResults) {
+		Set<ModelTestingResult> results = new HashSet<>();
+		String[] stringResults = joinedResults.split("\\|");
+		for( String result: stringResults )
+			results.add(ModelTestingResult.valueOf(result));
+		return results;
 	}
 }

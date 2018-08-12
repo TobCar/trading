@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
-import java.util.TimeZone;
+import java.util.Set;
 
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
@@ -40,16 +40,16 @@ public class SequentialProbabilitiesTrader {
 	private Candle previousCandle;
 	private PercentageChangeBin[] latestBins = new PercentageChangeBin[SequentialProbabilitiesHyperparameters.maxBinsInSequence];
 	private String tickerToObserve;
-	private ModelTestingResult useInDirection;
+	private Set<ModelTestingResult> useInDirections;
 	
 	public static void main(String[] args) throws IOException {
 		File parentDirectory = HelperMethods.chooseDirectory();
-		Map<String, ModelTestingResult> stocksToObserve = SequentialProbabilitiesTool.getStocksToObserve(parentDirectory);
+		Map<String, Set<ModelTestingResult>> stocksToObserve = SequentialProbabilitiesTool.getStocksToObserve(parentDirectory);
 		
 		int apiCalls = 0;
-		for( Entry<String, ModelTestingResult> entry: stocksToObserve.entrySet() ) {
+		for( Entry<String, Set<ModelTestingResult>> entry: stocksToObserve.entrySet() ) {
 			String ticker = entry.getKey();
-			ModelTestingResult useInDirection = entry.getValue();
+			Set<ModelTestingResult> useInDirections = entry.getValue();
 			
 			System.out.println("Trader is analyzing "+ticker);
 			
@@ -57,7 +57,7 @@ public class SequentialProbabilitiesTrader {
 			File binThresholdsFile = new File(parentDirectory, binThresholdsFileName);
 			File savedModelFile = new File(parentDirectory, SequentialProbabilitiesFileNames.savedModelFileName(ticker));
 			
-			SequentialProbabilitiesTrader trader = new SequentialProbabilitiesTrader(binThresholdsFile, savedModelFile, ticker, useInDirection);
+			SequentialProbabilitiesTrader trader = new SequentialProbabilitiesTrader(binThresholdsFile, savedModelFile, ticker, useInDirections);
 			
 			File latestBinsFile = new File(parentDirectory, SequentialProbabilitiesFileNames.latestBinsFileName(ticker));
 			File previousCandleFile = new File(parentDirectory, SequentialProbabilitiesFileNames.previousCandleFileName(ticker));
@@ -88,11 +88,11 @@ public class SequentialProbabilitiesTrader {
 		}
 	}
 	
-	public SequentialProbabilitiesTrader(File binThresholdsFile, File savedModelFile, String ticker, ModelTestingResult useInDirection) throws IOException {
+	public SequentialProbabilitiesTrader(File binThresholdsFile, File savedModelFile, String ticker, Set<ModelTestingResult> useInDirections) throws IOException {
 	    this.factory = PercentageChangeBinFactory.loadFrom(binThresholdsFile);
 	    this.model = new SequentialProbabilitiesModel(savedModelFile);
 	    this.tickerToObserve = ticker;
-	    this.useInDirection = useInDirection;
+	    this.useInDirections = useInDirections;
 	}
 	
 	public void processLatestDailyCandleFromAlphaVantage(File parentDirectory) throws IOException {
@@ -112,25 +112,32 @@ public class SequentialProbabilitiesTrader {
 	
 	public void handlePrediction(ModelPrediction<Boolean> prediction, File parentDirectory) throws IOException {
 		if( prediction != null && prediction.getItem() != null ) {
-			if( prediction.getItem() && useInDirection == ModelTestingResult.USE_UPWARDS ) {
-				System.out.println("Predicting a rise in "+tickerToObserve);
-			} else if( !prediction.getItem() && useInDirection == ModelTestingResult.USE_DOWNWARDS ){
-				System.out.println("Pridicting a drop in "+tickerToObserve);
+			boolean usablePrediction = false;
+			ModelTestingResult tradeDirection = prediction.getItem() ? ModelTestingResult.USE_UPWARDS : ModelTestingResult.USE_DOWNWARDS;
+			
+			if( prediction.getItem() && useInDirections.contains(ModelTestingResult.USE_UPWARDS) ) {
+				System.out.println("Predicting a usable rise in "+tickerToObserve);
+				usablePrediction = true;
+				tradeDirection = ModelTestingResult.USE_UPWARDS;
+			} else if( !prediction.getItem() && useInDirections.contains(ModelTestingResult.USE_DOWNWARDS) ){
+				System.out.println("Pridicting a usable drop in "+tickerToObserve);
+				usablePrediction = true;
+				tradeDirection = ModelTestingResult.USE_DOWNWARDS;
 			}
 		
 			File traderLogsFile = new File(parentDirectory, SequentialProbabilitiesFileNames.traderLogsFileName);
-			logPredictionIn(traderLogsFile, prediction);
+			logPredictionIn(traderLogsFile, tradeDirection, prediction, usablePrediction);
 		}
 	}
 	
-	public void logPredictionIn(File traderLogsFile, ModelPrediction<Boolean> prediction) throws IOException {
+	public void logPredictionIn(File traderLogsFile, ModelTestingResult tradeDirection, ModelPrediction<Boolean> prediction, boolean usablePrediction) throws IOException {
+		boolean traderLogsFileIsEmpty = !traderLogsFile.exists();
 		FileWriter w = new FileWriter(traderLogsFile, true); // The true will append the new data
-		if( !traderLogsFile.exists() )
-			w.write("Ticker,Direction,TimeWhenPredicted,PriceWhenPredicted\n");
-		SimpleDateFormat torontoDF = new SimpleDateFormat("dd.MM.yyyy/kk:mmz");
-		torontoDF.setTimeZone(TimeZone.getTimeZone("EDT"));
-		String currentDate = torontoDF.format(new Date());
-	    w.write(tickerToObserve+","+useInDirection+","+currentDate+","+previousCandle.getClose()+"\n");
+		if( traderLogsFileIsEmpty )
+			w.write("Ticker,Direction,TimeWhenPredicted,PriceWhenPredicted,UsablePrediction\n");
+		SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy/kk:mmz");
+		String currentDate = df.format(new Date());
+	    w.write(tickerToObserve+","+tradeDirection+","+currentDate+","+previousCandle.getClose()+","+usablePrediction+"\n");
 	    w.close();
 	}
 	
