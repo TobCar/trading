@@ -52,8 +52,9 @@ public final class SequentialProbabilitiesBinThresholds {
 		// There are lines left to load, and current line is not the titles
 		while( line != null && !line.startsWith("timestamp")) {
 			AlphaVantageDataPoint dataPoint = AlphaVantageDataPoint.parseLine(line);
-			
-			if( previousCandle != null && previousCandle.getClose().compareTo(new BigDecimal(0)) == 1 ) {
+
+			boolean dataPointIsRecent = SequentialProbabilitiesHyperparameters.isARecentDate(dataPoint.timestamp);
+			if( previousCandle != null && previousCandle.getClose().compareTo(new BigDecimal(0)) == 1 && dataPointIsRecent ) {
 				BigDecimal percentageChange = dataPoint.candle.getClose().divide(previousCandle.getClose(), RoundingMode.HALF_EVEN).subtract(new BigDecimal(1));
 				double percentageChangeDouble = percentageChange.doubleValue();
 				int comparison = percentageChange.compareTo(new BigDecimal(0));
