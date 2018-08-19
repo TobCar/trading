@@ -45,8 +45,8 @@ public class SequentialProbabilitiesModel {
     }
     
     public ModelPrediction<Boolean> predictNext(PercentageChangeBin[] latestBins) {
-    	int minLength = SequentialProbabilitiesHyperparameters.minBinsInSequence;
-    	int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
+    	int minLength = SequentialProbabilitiesOptions.minBinsInSequence;
+    	int maxLength = SequentialProbabilitiesOptions.maxBinsInSequence;
     	BinSequence[] sequences = BinSequence.getSequences(latestBins, minLength, maxLength);
     	
     	List<ModelPrediction<Boolean>> upwardPredictions = new ArrayList<>();
@@ -80,10 +80,10 @@ public class SequentialProbabilitiesModel {
     	double sumOfTotalOccurencesForUpwardPredictions = sumOf(totalOccurencesForUpwardPredictions);
     	double sumOfTotalOccurencesForDownwardPredictions = sumOf(totalOccurencesForDownwardPredictions);
     	
-    	boolean enoughOccurencesUpward = sumOfTotalOccurencesForUpwardPredictions > SequentialProbabilitiesHyperparameters.minimumTimesPatternsWereEncountered;
-    	boolean enoughOccurencesDownward = sumOfTotalOccurencesForDownwardPredictions > SequentialProbabilitiesHyperparameters.minimumTimesPatternsWereEncountered;
+    	boolean enoughOccurencesUpward = sumOfTotalOccurencesForUpwardPredictions > SequentialProbabilitiesOptions.minimumTimesPatternsWereEncountered;
+    	boolean enoughOccurencesDownward = sumOfTotalOccurencesForDownwardPredictions > SequentialProbabilitiesOptions.minimumTimesPatternsWereEncountered;
     	
-    	double minimumConfidence = SequentialProbabilitiesHyperparameters.minimumConfidence;
+    	double minimumConfidence = SequentialProbabilitiesOptions.minimumConfidence;
     	if( upwardProbability > downwardProbability && upwardProbability > minimumConfidence && enoughOccurencesUpward ) {
     		System.out.println("Predicting a rise. Confidence: "+upwardProbability+" Total times these patterns were encountered: "+sumOfTotalOccurencesForUpwardPredictions+".");
     		return new ModelPrediction<Boolean>(true, upwardProbability);

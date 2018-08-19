@@ -3,7 +3,7 @@ package com.tobiascarryer.trading.models.sequentialprobabilities;
 import java.util.Calendar;
 import java.util.Date;
 
-public class SequentialProbabilitiesHyperparameters {
+public class SequentialProbabilitiesOptions {
 	public static int maxBinsInSequence = 5;
 	public static int minBinsInSequence = 2;
 	public static int numberOfBinIntervals = 4; // Must calculate bin thresholds again if this is changed

@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import com.tobiascarryer.trading.models.ModelTestingResult;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBin;
-import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
+import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesOptions;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesTool;
 
 public class SequentialProbabilitiesToolTest {
@@ -28,7 +28,7 @@ public class SequentialProbabilitiesToolTest {
     	PercentageChangeBin[] bins = {zero, negOne, two, negThree, four, negFive, six, negSeven};
     	PercentageChangeBin[] latestBins = SequentialProbabilitiesTool.getLatestBins(bins.length-1, bins);
     	
-    	assertEquals(latestBins.length, SequentialProbabilitiesHyperparameters.maxBinsInSequence);
+    	assertEquals(latestBins.length, SequentialProbabilitiesOptions.maxBinsInSequence);
     	
     	for( int i = bins.length-1, n = 0; i > latestBins.length; i--, n++ ) {
     		assertTrue(latestBins[n] == bins[i]);

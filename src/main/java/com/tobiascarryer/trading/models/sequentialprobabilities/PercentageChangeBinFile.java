@@ -73,7 +73,7 @@ public class PercentageChangeBinFile {
 		// There are lines left to load, and current line is not the titles
 		while( line != null && !line.startsWith("timestamp")) {
 			AlphaVantageDataPoint dataPoint = AlphaVantageDataPoint.parseLine(line);
-			boolean dataPointIsRecent = SequentialProbabilitiesHyperparameters.isARecentDate(dataPoint.timestamp);
+			boolean dataPointIsRecent = SequentialProbabilitiesOptions.isARecentDate(dataPoint.timestamp);
 			if( dataPointIsRecent ) {
 				PercentageChangeBin bin = binFactory.create(dataPoint.candle, previousCandle);
 				if( bin != null )

@@ -28,7 +28,7 @@ import com.tobiascarryer.trading.models.ModelPrediction;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBin;
 import com.tobiascarryer.trading.models.sequentialprobabilities.PercentageChangeBinFactory;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesFileNames;
-import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesHyperparameters;
+import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesOptions;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesModel;
 import com.tobiascarryer.trading.models.sequentialprobabilities.SequentialProbabilitiesTool;
 import com.tobiascarryer.trading.models.ModelTestingResult;
@@ -38,7 +38,7 @@ public class SequentialProbabilitiesTrader {
 	private SequentialProbabilitiesModel model;
 	private PercentageChangeBinFactory factory;
 	private Candle previousCandle;
-	private PercentageChangeBin[] latestBins = new PercentageChangeBin[SequentialProbabilitiesHyperparameters.maxBinsInSequence];
+	private PercentageChangeBin[] latestBins = new PercentageChangeBin[SequentialProbabilitiesOptions.maxBinsInSequence];
 	private String tickerToObserve;
 	private Set<ModelTestingResult> useInDirections;
 	
@@ -175,7 +175,7 @@ public class SequentialProbabilitiesTrader {
     	// Read file backwards to get newest bins first
 		ReversedLinesFileReader r = new ReversedLinesFileReader(binsFile, Charset.forName("UTF-8"));
 		
-		PercentageChangeBin[] binsFromFile = new PercentageChangeBin[SequentialProbabilitiesHyperparameters.maxBinsInSequence];
+		PercentageChangeBin[] binsFromFile = new PercentageChangeBin[SequentialProbabilitiesOptions.maxBinsInSequence];
 		
 		String line = r.readLine();
 		for( int i = 0; i < binsFromFile.length; i++ ) {

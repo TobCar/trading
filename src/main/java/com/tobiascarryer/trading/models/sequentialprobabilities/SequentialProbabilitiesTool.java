@@ -149,7 +149,7 @@ public class SequentialProbabilitiesTool {
 		String modelFileName = SequentialProbabilitiesFileNames.savedModelFileName(ticker);
 		
 		try {
-			SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesHyperparameters.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
+			SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesOptions.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
 			PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
 			return generateModel(parentDirectory, modelFileName, binsFileName);
 		} catch (ArrayIndexOutOfBoundsException|FileNotFoundException ex) {
@@ -169,8 +169,8 @@ public class SequentialProbabilitiesTool {
     	PercentageChangeBin[] bins = PercentageChangeBinFile.loadBinsFrom(parentDirectory, binsFileName);
     	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining = new HashMap<>();
     	
-    	int minLength = SequentialProbabilitiesHyperparameters.minBinsInSequence;
-    	int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
+    	int minLength = SequentialProbabilitiesOptions.minBinsInSequence;
+    	int maxLength = SequentialProbabilitiesOptions.maxBinsInSequence;
     	
     	for( int i = maxLength-1; i < bins.length * percentageOfDataForTraining; i++ ) {
     		PercentageChangeBin[] latestBins = new PercentageChangeBin[maxLength];
@@ -195,7 +195,7 @@ public class SequentialProbabilitiesTool {
     	Set<ModelTestingResult> testingResult = new HashSet<>();
     	testingResult.add(ModelTestingResult.DO_NOT_USE);
     	
-    	int startingIndex = (int) (bins.length * percentageOfDataForTraining) - SequentialProbabilitiesHyperparameters.maxBinsInSequence + 1;
+    	int startingIndex = (int) (bins.length * percentageOfDataForTraining) - SequentialProbabilitiesOptions.maxBinsInSequence + 1;
     	int numberOfBinsToTestWith = bins.length - startingIndex;
     	if( numberOfBinsToTestWith > 0 ) {
     		PercentageChangeBin[] binsToTestWith = new PercentageChangeBin[numberOfBinsToTestWith];
@@ -221,7 +221,7 @@ public class SequentialProbabilitiesTool {
     	double rightDownwardPredictions = 0;
     	double totalDownwardPredictions = 0;
     	
-    	int maxBinSequenceLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
+    	int maxBinSequenceLength = SequentialProbabilitiesOptions.maxBinsInSequence;
     	for( int i = maxBinSequenceLength-1; i < binsToTestWith.length-1; i++ ) {
     		PercentageChangeBin[] latestBins = getLatestBins(i, binsToTestWith);
     		
@@ -248,10 +248,10 @@ public class SequentialProbabilitiesTool {
     	
     	Set<ModelTestingResult> results = new HashSet<>();
     	
-    	if( upwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence )
+    	if( upwardsAccuracy > SequentialProbabilitiesOptions.minimumConfidence )
     		results.add(ModelTestingResult.USE_UPWARDS);
     		
-    	if( downwardsAccuracy > SequentialProbabilitiesHyperparameters.minimumConfidence )
+    	if( downwardsAccuracy > SequentialProbabilitiesOptions.minimumConfidence )
     		results.add(ModelTestingResult.USE_DOWNWARDS);
 
     	if( results.isEmpty() )
@@ -261,7 +261,7 @@ public class SequentialProbabilitiesTool {
 	}
 	
 	public static PercentageChangeBin[] getLatestBins(int latestBinIndex, PercentageChangeBin[] bins) {
-		int maxLength = SequentialProbabilitiesHyperparameters.maxBinsInSequence;
+		int maxLength = SequentialProbabilitiesOptions.maxBinsInSequence;
 		
 		PercentageChangeBin[] latestBins = new PercentageChangeBin[maxLength];
 		int binsAddedToLatestBins = 0;
