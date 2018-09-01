@@ -8,7 +8,8 @@ public final class SequentialProbabilitiesFileNames {
 	static String stocksToObserveFileName = "stocks-to-observe.csv";
 	private static String binThresholdsFileNameAppend = "bin-thresholds.csv";
 	private static String binsFileNameAppend = "bins.txt";
-	private static String modelFileNameAppend = "model.txt";
+	private static String weekdayModelFileNameAppend = "weekday-model.txt";
+	private static String weekendModelFileNameAppend = "weekend-model.txt";
 	private static String latestBinsAppend = "latest-bins.txt";
 	private static String previousCandleAppend = "previous-candle.csv";
 	
@@ -37,8 +38,12 @@ public final class SequentialProbabilitiesFileNames {
 		return createFileName(fileNameBase, ticker, binsFileNameAppend);
 	}
 	
-	public static String savedModelFileName(String ticker) {
-		return createFileName(fileNameBase, ticker, modelFileNameAppend);
+	public static String savedWeekdayModelFileName(String ticker) {
+		return createFileName(fileNameBase, ticker, weekdayModelFileNameAppend);
+	}
+	
+	public static String savedWeekendModelFileName(String ticker) {
+		return createFileName(fileNameBase, ticker, weekendModelFileNameAppend);
 	}
 	
 	public static String latestBinsFileName(String ticker) {

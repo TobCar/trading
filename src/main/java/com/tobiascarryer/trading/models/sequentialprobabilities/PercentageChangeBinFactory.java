@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Calendar;
+import java.util.Calendar.Builder;
+import java.util.Date;
+import java.util.TimeZone;
 
 import com.tobiascarryer.trading.charts.Candle;
 
@@ -38,28 +42,34 @@ public class PercentageChangeBinFactory {
     	return new PercentageChangeBinFactory(posChangeThresholds, negChangeThresholds);
 	}
 	
-	public PercentageChangeBin create(Candle candle, Candle previousCandle) {
-		if( previousCandle == null )
+	public PercentageChangeBin create(Candle candle, Candle previousCandle, Date timestamp) {
+		if( previousCandle == null || timestamp == null )
 			return null;
+		
+		Builder b = new Calendar.Builder();
+		b.setInstant(timestamp);
+		b.setTimeZone(TimeZone.getTimeZone(SequentialProbabilitiesOptions.exchangeTimeZone));
+		Calendar c = b.build();
+		int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
 			
 		double percentageChange = candle.getClose().divide(previousCandle.getClose(), RoundingMode.HALF_EVEN).subtract(new BigDecimal(1)).doubleValue();
 		if( percentageChange > 0 ) {
 			for( int i = 0; i < intervalThresholdsPosChange.length; i++ ) {
 				if( percentageChange < intervalThresholdsPosChange[i] )
-					return new PercentageChangeBin(i+1);
+					return new PercentageChangeBin(i+1, dayOfWeek);
 			}
 			// Final interval is all encompassing
-			return new PercentageChangeBin(intervalThresholdsPosChange.length+1);
+			return new PercentageChangeBin(intervalThresholdsPosChange.length+1, dayOfWeek);
 		} else if( percentageChange < 0 ) {
 			for( int i = 0; i < intervalThresholdsNegChange.length; i++ ) {
 				if( percentageChange > intervalThresholdsNegChange[i] )
-					return new PercentageChangeBin(-i-1);
+					return new PercentageChangeBin(-i-1, dayOfWeek);
 			}
 			// Final interval is all encompassing
-			return new PercentageChangeBin(-intervalThresholdsNegChange.length-1);
+			return new PercentageChangeBin(-intervalThresholdsNegChange.length-1, dayOfWeek);
 		}
 		
-		return new PercentageChangeBin(0); // % change was exactly zero
+		return new PercentageChangeBin(0, dayOfWeek); // % change was exactly zero
 	}
 	
 	public void printIntervals() {

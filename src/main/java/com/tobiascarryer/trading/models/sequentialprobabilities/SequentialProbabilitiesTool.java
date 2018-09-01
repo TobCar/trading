@@ -146,12 +146,13 @@ public class SequentialProbabilitiesTool {
 		String historicalDataFileName = SequentialProbabilitiesFileNames.historicalDataFileName(ticker);
 		String binThresholdsFileName = SequentialProbabilitiesFileNames.binThresholdsFileName(ticker);
 		String binsFileName = SequentialProbabilitiesFileNames.binsFileName(ticker);
-		String modelFileName = SequentialProbabilitiesFileNames.savedModelFileName(ticker);
+		String savedWeekdayModelFileName = SequentialProbabilitiesFileNames.savedWeekdayModelFileName(ticker);
+		String savedWeekendModelFileName = SequentialProbabilitiesFileNames.savedWeekendModelFileName(ticker);
 		
 		try {
 			SequentialProbabilitiesBinThresholds.writeBinThresholdsFile(SequentialProbabilitiesOptions.numberOfBinIntervals, parentDirectory, historicalDataFileName, binThresholdsFileName);
 			PercentageChangeBinFile.writeBinsFile(parentDirectory, historicalDataFileName, binThresholdsFileName, binsFileName);
-			return generateModel(parentDirectory, modelFileName, binsFileName);
+			return generateModels(parentDirectory, savedWeekdayModelFileName, savedWeekendModelFileName, binsFileName);
 		} catch (ArrayIndexOutOfBoundsException|FileNotFoundException ex) {
 			// ArrayIndexOutOfBoundsException means a historical data file could not be parsed
 			// likely because the ticker does not exist in AlphaVantage or because of API throttling.
@@ -165,14 +166,17 @@ public class SequentialProbabilitiesTool {
 		}
 	}
 
-	public static Set<ModelTestingResult> generateModel(File parentDirectory, String savedModelFileName, String binsFileName) throws IOException {
+	public static Set<ModelTestingResult> generateModels(File parentDirectory, String savedWeekdayModelFileName, String savedWeekendModelFileName, String binsFileName) throws IOException {
     	PercentageChangeBin[] bins = PercentageChangeBinFile.loadBinsFrom(parentDirectory, binsFileName);
-    	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining = new HashMap<>();
+    	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTrainingWeekdays = new HashMap<>();
+    	Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTrainingWeekends = new HashMap<>();
     	
     	int minLength = SequentialProbabilitiesOptions.minBinsInSequence;
     	int maxLength = SequentialProbabilitiesOptions.maxBinsInSequence;
     	
     	for( int i = maxLength-1; i < bins.length * percentageOfDataForTraining; i++ ) {
+    		// Get latest bins going through the current spot in the historical data and back
+    		// Latest bins are ordered from oldest to newest.
     		PercentageChangeBin[] latestBins = new PercentageChangeBin[maxLength];
     		int binsAddedToLatestBins = 0;
     		for( int n = i-maxLength+1; n <= i; n++ ) {
@@ -182,11 +186,10 @@ public class SequentialProbabilitiesTool {
     		BinSequence[] sequences = BinSequence.getSequences(latestBins, minLength, maxLength);
     		for( BinSequence sequence: sequences ) {
     			Boolean isPositiveBin = bins[i+1].isPositiveBin();
+    			
     			if( isPositiveBin != null ) {
-    				BooleanMarkovChainLink<BinSequence> defaultChainLink = new BooleanMarkovChainLink<BinSequence>(sequence);
-    				BooleanMarkovChainLink<BinSequence> chainLink = chainLinksInTraining.getOrDefault(sequence, defaultChainLink);
-    				chainLink.increaseOccurencesFor(isPositiveBin);
-    				chainLinksInTraining.put(sequence, chainLink);
+    				boolean isDayBeforeWeekend = latestBins[latestBins.length-1].isDayBeforeTheWeekend();
+    				increaseOccurencesFor(sequence, isPositiveBin, isDayBeforeWeekend, chainLinksInTrainingWeekdays, chainLinksInTrainingWeekends);
     			}
     		}
     	}
@@ -202,17 +205,37 @@ public class SequentialProbabilitiesTool {
     		for( int i = 0; i < binsToTestWith.length; i++ ) {
     			binsToTestWith[i] = bins[startingIndex + i];
     		}
-    		testingResult = testModel(chainLinksInTraining, binsToTestWith);
+    		
+    		// REMOVE WEEKENDS FROM THIS FUNCTION AND JUST GO BACK TO THE createModelsAndDetermineWhatStocksToObserve FUNCTION AND CREATE 2 MODELS FROM THERE
+    		// IT IS POSSIBLE WEEKDAY MODELS ARE MARKED AS USABLE BUT WEEKEND MODELS ARE NOT, AND VICE VERSA
+    		// TRADER WILL LOAD 2 MODELS AS WELL
+    		// TO DO: ABOVE
+    		// TO DO: TRADER PREDICT OVER WEEKENDS WITH THE WEEKEND MODEL
+    		
+    		
+    		testingResult = testModel(chainLinksInTrainingWeekdays, binsToTestWith);
     	}
     	
-    	BufferedWriter w = new BufferedWriter(new FileWriter(new File(parentDirectory, savedModelFileName)));
+    	writeModelTo(chainLinksInTrainingWeekdays, parentDirectory, savedWeekdayModelFileName);
+    	writeModelTo(chainLinksInTrainingWeekends, parentDirectory, savedWeekendModelFileName);
+     	
+     	return testingResult;
+    }
+	
+	public static void increaseOccurencesFor(BinSequence sequence, Boolean isPositiveBin, Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining) {
+		BooleanMarkovChainLink<BinSequence> defaultChainLink = new BooleanMarkovChainLink<BinSequence>(sequence);
+		BooleanMarkovChainLink<BinSequence> chainLink = chainLinksInTraining.getOrDefault(sequence, defaultChainLink);
+		chainLink.increaseOccurencesFor(isPositiveBin);
+		chainLinksInTraining.put(sequence, chainLink);
+	}
+	
+	private static void writeModelTo(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinksInTraining, File parentDirectory, String fileNameToOverwrite) throws IOException {
+		BufferedWriter w = new BufferedWriter(new FileWriter(new File(parentDirectory, fileNameToOverwrite)));
     	for( BooleanMarkovChainLink<BinSequence> chainLink: chainLinksInTraining.values() ) {
     		w.write(chainLink.toString()+"\n");
     	}
      	w.close();
-     	
-     	return testingResult;
-    }
+	}
 	
 	private static Set<ModelTestingResult> testModel(Map<BinSequence, BooleanMarkovChainLink<BinSequence>> chainLinks, PercentageChangeBin[] binsToTestWith) {
 		SequentialProbabilitiesModel model = new SequentialProbabilitiesModel(chainLinks);

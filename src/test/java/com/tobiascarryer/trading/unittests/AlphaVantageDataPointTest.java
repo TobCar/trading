@@ -1,8 +1,6 @@
 package com.tobiascarryer.trading.unittests;
 
 import java.math.BigDecimal;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import com.tobiascarryer.trading.exchanges.AlphaVantageDataPoint;
 

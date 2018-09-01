@@ -2,6 +2,7 @@ package com.tobiascarryer.trading.unittests.models;
 
 import static org.junit.Assert.*;
 
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,10 +20,10 @@ public class BinSequenceTest {
     	int minLength = 2;
     	int maxLength = 4;
     	
-    	PercentageChangeBin zero = new PercentageChangeBin(0);
-    	PercentageChangeBin negOne = new PercentageChangeBin(-1);
-    	PercentageChangeBin two = new PercentageChangeBin(2);
-    	PercentageChangeBin negThree = new PercentageChangeBin(-3);
+    	PercentageChangeBin zero = new PercentageChangeBin(0, null);
+    	PercentageChangeBin negOne = new PercentageChangeBin(-1, null);
+    	PercentageChangeBin two = new PercentageChangeBin(2, null);
+    	PercentageChangeBin negThree = new PercentageChangeBin(-3, null);
     	
     	PercentageChangeBin[] bins2 = {zero, negOne};
     	PercentageChangeBin[] bins3 = {zero, negOne, two};
@@ -46,16 +47,16 @@ public class BinSequenceTest {
 
 	@Test
 	public void testEquality() {
-		PercentageChangeBin bin1 = new PercentageChangeBin(1);
-		PercentageChangeBin bin2 = new PercentageChangeBin(2);
-		PercentageChangeBin bin3 = new PercentageChangeBin(3);
+		PercentageChangeBin bin1 = new PercentageChangeBin(1, Calendar.MONDAY);
+		PercentageChangeBin bin2 = new PercentageChangeBin(2, Calendar.MONDAY);
+		PercentageChangeBin bin3 = new PercentageChangeBin(3, Calendar.MONDAY);
 		
 		PercentageChangeBin[] bins = {bin1, bin2, bin3};
 		BinSequence sequence = new BinSequence(bins);
 		
-		PercentageChangeBin equalBin1 = new PercentageChangeBin(1);
-		PercentageChangeBin equalBin2 = new PercentageChangeBin(2);
-		PercentageChangeBin equalBin3 = new PercentageChangeBin(3);
+		PercentageChangeBin equalBin1 = new PercentageChangeBin(1, Calendar.MONDAY);
+		PercentageChangeBin equalBin2 = new PercentageChangeBin(2, Calendar.MONDAY);
+		PercentageChangeBin equalBin3 = new PercentageChangeBin(3, Calendar.MONDAY);
 		
 		PercentageChangeBin[] equalBins = {equalBin1, equalBin2, equalBin3};
 		BinSequence equalSequence = new BinSequence(equalBins);
@@ -71,9 +72,9 @@ public class BinSequenceTest {
 	
 	@Test
 	public void testToString() {
-		PercentageChangeBin bin1 = new PercentageChangeBin(1);
-		PercentageChangeBin bin2 = new PercentageChangeBin(-2);
-		PercentageChangeBin bin3 = new PercentageChangeBin(3);
+		PercentageChangeBin bin1 = new PercentageChangeBin(1, Calendar.MONDAY);
+		PercentageChangeBin bin2 = new PercentageChangeBin(-2, Calendar.MONDAY);
+		PercentageChangeBin bin3 = new PercentageChangeBin(3, Calendar.MONDAY);
 		
 		PercentageChangeBin[] bins = {bin1, bin2, bin3};
 		BinSequence sequence = new BinSequence(bins);
@@ -83,9 +84,9 @@ public class BinSequenceTest {
 	
 	@Test
 	public void testParsing() {
-		PercentageChangeBin bin1 = new PercentageChangeBin(1);
-		PercentageChangeBin bin2 = new PercentageChangeBin(-2);
-		PercentageChangeBin bin3 = new PercentageChangeBin(3);
+		PercentageChangeBin bin1 = new PercentageChangeBin(1, Calendar.MONDAY);
+		PercentageChangeBin bin2 = new PercentageChangeBin(-2, Calendar.MONDAY);
+		PercentageChangeBin bin3 = new PercentageChangeBin(3, Calendar.MONDAY);
 		
 		PercentageChangeBin[] bins = {bin1, bin2, bin3};
 		BinSequence sequence = new BinSequence(bins);

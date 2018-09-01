@@ -26,7 +26,7 @@ public class BinSequence {
 					nextIsNegNum = false;
 					binVal = -binVal;
 				}
-				bins.add(new PercentageChangeBin(binVal));
+				bins.add(new PercentageChangeBin(binVal, null));
 			}
 		}
 		

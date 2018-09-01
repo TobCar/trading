@@ -104,7 +104,7 @@ public class SequentialProbabilitiesTrader {
 			scanner.next(); // Skip csv file titles
 			AlphaVantageDataPoint dataPoint = AlphaVantageDataPoint.parseLine(scanner.next());
 			scanner.close();
-			handlePrediction(processCandle(dataPoint.candle), parentDirectory);
+			handlePrediction(processCandle(dataPoint.candle, dataPoint.timestamp), parentDirectory);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -149,10 +149,10 @@ public class SequentialProbabilitiesTrader {
 	/**
      * @param candle The latest candle.
      */
-    public ModelPrediction<Boolean> processCandle(Candle candle) {
+    public ModelPrediction<Boolean> processCandle(Candle candle, Date timestamp) {
     	ModelPrediction<Boolean> prediction = new ModelPrediction<Boolean>(null, 0);
     	if( previousCandle != null ) {
-    		prediction = processBin(factory.create(candle, previousCandle));
+    		prediction = processBin(factory.create(candle, previousCandle, timestamp));
     	}
     	previousCandle = candle;
     	return prediction;
@@ -179,7 +179,7 @@ public class SequentialProbabilitiesTrader {
 		
 		String line = r.readLine();
 		for( int i = 0; i < binsFromFile.length; i++ ) {
-			binsFromFile[i] = new PercentageChangeBin(Integer.valueOf(line));
+			binsFromFile[i] = PercentageChangeBin.parseString(line);
 			line = r.readLine();
 		}
 		
@@ -224,7 +224,7 @@ public class SequentialProbabilitiesTrader {
 		try {
 			BufferedReader r = new BufferedReader(new FileReader(latestBinsFile));
 	    	for( int i = 0; i < latestBins.length; i++ ) {
-				latestBins[i] = new PercentageChangeBin(Integer.valueOf(r.readLine()));
+				latestBins[i] = PercentageChangeBin.parseString(r.readLine());
 	    	}
 	    	r.close();
     	} catch (FileNotFoundException e) {

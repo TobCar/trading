@@ -33,7 +33,7 @@ public class PercentageChangeBinFile {
 		String line = r.readLine();
 		List<PercentageChangeBin> bins = new ArrayList<>();
 		while( line != null ) {
-			bins.add(new PercentageChangeBin(Integer.parseInt(line)));
+			bins.add(PercentageChangeBin.parseString(line));
 			line = r.readLine();
 		}
 		r.close();
@@ -75,7 +75,7 @@ public class PercentageChangeBinFile {
 			AlphaVantageDataPoint dataPoint = AlphaVantageDataPoint.parseLine(line);
 			boolean dataPointIsRecent = SequentialProbabilitiesOptions.isARecentDate(dataPoint.timestamp);
 			if( dataPointIsRecent ) {
-				PercentageChangeBin bin = binFactory.create(dataPoint.candle, previousCandle);
+				PercentageChangeBin bin = binFactory.create(dataPoint.candle, previousCandle, dataPoint.timestamp);
 				if( bin != null )
 					w.write(bin.toString()+"\n");
 			}
